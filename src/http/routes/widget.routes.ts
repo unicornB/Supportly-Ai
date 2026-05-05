@@ -20,19 +20,6 @@ const sendMessageSchema = z.object({
 
 export const widgetRoutes = new Hono<AppContext>();
 
-widgetRoutes.use("*", async (c, next) => {
-  c.header("Access-Control-Allow-Origin", "*");
-  c.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  c.header("Access-Control-Allow-Headers", "authorization,content-type");
-  c.header("Access-Control-Max-Age", "86400");
-
-  if (c.req.method === "OPTIONS") {
-    return c.body(null, 204);
-  }
-
-  await next();
-});
-
 widgetRoutes.post("/conversations", async (c) => {
   const input = createConversationSchema.parse(await c.req.json());
   const services = createServices(c.env);

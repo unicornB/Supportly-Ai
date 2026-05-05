@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import type { AppContext } from "./config/env";
 import { errorMiddleware, errorResponse } from "./http/middleware/error.middleware";
 import { requestIdMiddleware } from "./http/middleware/request-id.middleware";
@@ -14,6 +15,15 @@ import { widgetRoutes } from "./http/routes/widget.routes";
 export const app = new Hono<AppContext>();
 
 app.use("*", requestIdMiddleware());
+app.use(
+  "/api/widget/*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Authorization", "Content-Type"],
+    maxAge: 86400,
+  })
+);
 app.use("*", errorMiddleware());
 
 app.route("/health", healthRoutes);
