@@ -51,6 +51,13 @@
 
 ![Supportly Admin 后台](./docs/screenshot/admin.png)
 
+后台 Demo：https://supportly.comarket.dev/
+
+```text
+账号：admin@example.com
+密码：admin123
+```
+
 ### Web Chat Widget
 
 ![Supportly Web Chat Widget](./docs/screenshot/web-widget.png)
