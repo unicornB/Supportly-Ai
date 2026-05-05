@@ -60,6 +60,8 @@
 
 ### Web Chat Widget
 
+Widget Demo：https://supportly.comarket.dev/demo
+
 ![Supportly Web Chat Widget](./docs/screenshot/web-widget.png)
 
 ### Telegram Bot
