@@ -374,17 +374,7 @@ pnpm dev
 http://localhost:5173
 ```
 
-当前 Worker Assets 配置：
-
-```toml
-[assets]
-directory = "../admin/dist"
-binding = "ASSETS"
-not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/webhooks/*", "/health"]
-```
-
-也就是说，`server-api` 发布时会带上 Admin 的构建产物。
+Admin 与 `server-api` 分开部署，后端 Worker 发布时不再携带 Admin 静态资源。
 
 构建 Admin：
 
