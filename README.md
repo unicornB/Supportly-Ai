@@ -1,16 +1,29 @@
-# Supportly Server API（Cloudflare 原生智能客服后端）
+# Supportly Server API（免费自部署智能客服后端）
 
-基于 Cloudflare Workers 沉淀出来的轻量级智能客服后端服务，支持多渠道消息接入、客服会话、知识库检索、AI 自动回复、后台管理接口、Web Chat Widget、Telegram Bot 等场景。
+> 免费、自部署、Cloudflare 原生的智能客服后端。把 Web Chat Widget、Telegram Bot 和自定义 Webhook 汇入统一会话，用知识库 + Workers AI 自动回复，先把客服系统跑起来。
 
-当前项目优先解决：
+![Free](https://img.shields.io/badge/Free-%E5%85%8D%E8%B4%B9%E8%87%AA%E9%83%A8%E7%BD%B2-16A34A?style=flat-square)
+![No Seat Fee](https://img.shields.io/badge/No%20Seat%20Fee-%E6%97%A0%E5%9D%90%E5%B8%AD%E8%B4%B9-0EA5E9?style=flat-square)
+![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Hono](https://img.shields.io/badge/Hono-4.x-E36002?style=flat-square)
+![D1](https://img.shields.io/badge/Cloudflare-D1-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+
+## 为什么免费
+
+- **项目本身免费**：后端、Admin、Web Chat Widget 的核心链路面向免费自部署场景设计。
+- **没有坐席费**：单实例版本不内置订阅、坐席限制、会话数限制或渠道加价逻辑。
+- **不用先买客服 SaaS**：小团队可以先用自己的 Cloudflare 账号部署，跑通在线客服、知识库和 AI 回复。
+- **费用边界清楚**：Cloudflare Workers、D1、AI Search、Workers AI、Telegram 等第三方资源可能按平台规则产生费用；这里的“免费”指 Supportly 项目本身不收取产品费用。
+
+## 开箱能力
 
 ```text
-能接收消息
-能创建会话
-能查看和回复会话
-能接入知识库
-能用 AI 自动回复
-能通过 Web Chat Widget / Telegram 接入客服
+免费接入 Web Chat Widget / Telegram / Custom Webhook
+免费管理客服会话、未读消息和人工回复
+免费上传知识库并同步到 AI Search
+免费启用知识库驱动的 AI 自动回复
+免费部署 Admin 后台和 Server API 到 Cloudflare Workers
 ```
 
 `本项目需要 Node.js 20 或以上环境`
@@ -20,22 +33,18 @@
 `本项目运行在 Cloudflare Workers Runtime，不是传统 Node.js Server`
 
 <p align="center">
-<img align="left" height="96" src="../web-widget/src/images/supportly.png">
-<ul>
-<li><strong>运行平台</strong>: Cloudflare Workers</li>
-<li><strong>数据库</strong>: Cloudflare D1</li>
-<li><strong>知识库</strong>: Cloudflare AI Search</li>
-<li><strong>AI 模型</strong>: Cloudflare Workers AI</li>
-<li><strong>后台项目</strong>: <a href="../admin">admin</a></li>
-<li><strong>Web Chat Widget</strong>: <a href="../web-widget">web-widget</a></li>
-<li><strong>架构文档</strong>: <a href="../docs/code-architecture.md">code-architecture.md</a></li>
-</ul>
+  <img height="96" src="../web-widget/src/images/supportly.png" alt="Supportly">
 </p>
 
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Hono](https://img.shields.io/badge/Hono-4.x-E36002?style=flat-square)
-![D1](https://img.shields.io/badge/Cloudflare-D1-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+| 模块 | 说明 |
+| --- | --- |
+| 运行平台 | Cloudflare Workers |
+| 数据库 | Cloudflare D1 |
+| 知识库 | Cloudflare AI Search |
+| AI 模型 | Cloudflare Workers AI |
+| 后台项目 | [admin](../admin) |
+| Web Chat Widget | [web-widget](../web-widget) |
+| 架构文档 | [code-architecture.md](../docs/code-architecture.md) |
 
 ## 架构图
 
@@ -70,6 +79,34 @@ Cloudflare Worker
 ```
 
 ## 特点
+
+### 免费自部署优先
+
+Supportly 的第一目标不是把你锁进新的客服 SaaS，而是让你用现有 Cloudflare 账号快速拥有一套可运行、可修改、可迁移的客服后端。
+
+当前免费单实例版本包含：
+
+```text
+Admin 后台
+Web Chat Widget
+Telegram Bot
+Custom Webhook
+统一会话
+知识库
+AI 自动回复
+```
+
+不包含内置收费墙：
+
+```text
+坐席数量限制
+会话数量限制
+消息数量限制
+渠道接入加价
+AI 功能订阅开关
+```
+
+如果后续扩展多租户、企业权限、审计、计费等 SaaS 能力，也不会影响单实例自部署版本先免费跑起来。
 
 ### Cloudflare 原生
 
@@ -143,6 +180,8 @@ AI 回复流程：
 
 ## 功能特性
 
+免费单实例版本已经覆盖客服 MVP 的主要链路：
+
 - [x] 后台账号登录
 - [x] 默认管理员初始化
 - [x] D1 数据库迁移
@@ -172,7 +211,7 @@ AI 回复流程：
 - [ ] 满意度评价
 - [ ] 工单系统
 
-## 快速部署体验
+## 免费快速部署体验
 
 ### 1. 安装依赖
 
@@ -685,6 +724,12 @@ retrieval_type = vector
 
 ## 常见问题
 
+### Supportly 真的是免费的吗？
+
+Supportly 的项目代码和单实例自部署链路面向免费使用设计，不内置坐席费、会话数收费、渠道加价或 AI 功能订阅墙。
+
+需要注意的是，部署运行时会使用你的 Cloudflare、Telegram 等第三方账号。Cloudflare Workers、D1、AI Search、Workers AI 等资源是否产生费用，以对应平台的免费额度和计费规则为准。
+
 ### 为什么本地也会访问远程 AI Search？
 
 Cloudflare AI bindings 默认访问远程资源。`wrangler.toml` 中：
@@ -749,4 +794,4 @@ Webhook 地址在哪里看？
 
 ## License
 
-当前项目仍处于内部 MVP 阶段，License 待补充。
+Supportly 以免费自部署为主要定位。当前仓库暂未补充正式 License 文件；对外发布前建议补充明确的开源或免费使用协议，避免“免费使用”的授权边界不清。
