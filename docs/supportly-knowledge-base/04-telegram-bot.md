@@ -10,6 +10,20 @@
 - Telegram Webhook 测试失败怎么办？
 - 为什么 Telegram 收不到回复？
 
+## 测试 Demo 机器人
+
+可以先通过 Telegram 打开 Supportly 测试 Demo 机器人：
+
+```text
+https://t.me/my_supportly_ai_bot
+```
+
+也可以在 Telegram 中搜索：
+
+```text
+@my_supportly_ai_bot
+```
+
 ## 申请 Bot Token
 
 Telegram Bot Token 通过 BotFather 获取。
@@ -127,4 +141,3 @@ https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook
 - Bot 是否有权限向对应 chat 发送消息
 - Telegram API 是否返回错误
 - 消息状态是否变为 failed
-

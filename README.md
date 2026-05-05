@@ -59,6 +59,8 @@
 
 ![Supportly Telegram Bot](./docs/screenshot/telegarm.png)
 
+测试 Demo 机器人：[@my_supportly_ai_bot](https://t.me/my_supportly_ai_bot)
+
 ## 架构图
 
 ```text
