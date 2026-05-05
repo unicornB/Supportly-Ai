@@ -5,7 +5,7 @@ compatibility_date = "2026-03-27"
 [[d1_databases]]
 binding = "DB"
 database_name = "supportly"
-database_id = "replace-with-d1-database-id"
+database_id = "b1c96ba1-26be-4b78-bdb6-ab0d3ebb1365"
 
 [[ai_search_namespaces]]
 binding = "AI_SEARCH"
