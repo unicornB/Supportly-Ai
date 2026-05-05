@@ -58,6 +58,14 @@
 密码：admin123
 ```
 
+### 渠道管理
+
+![Supportly 渠道管理](./docs/screenshot/channels.png)
+
+### 知识库
+
+![Supportly 知识库](./docs/screenshot/knowledge.png)
+
 ### Web Chat Widget
 
 Widget Demo：https://supportly.comarket.dev/demo
