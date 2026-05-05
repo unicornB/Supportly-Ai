@@ -33,18 +33,18 @@
 `本项目运行在 Cloudflare Workers Runtime，不是传统 Node.js Server`
 
 <p align="center">
-  <img height="96" src="../web-widget/src/images/supportly.png" alt="Supportly">
+  <img height="96" src="./docs/logo/logo.png" alt="Supportly">
 </p>
 
-| 模块 | 说明 |
-| --- | --- |
-| 运行平台 | Cloudflare Workers |
-| 数据库 | Cloudflare D1 |
-| 知识库 | Cloudflare AI Search |
-| AI 模型 | Cloudflare Workers AI |
-| 后台项目 | [admin](../admin) |
-| Web Chat Widget | [web-widget](../web-widget) |
-| 架构文档 | [code-architecture.md](../docs/code-architecture.md) |
+| 模块            | 说明                                                 |
+| --------------- | ---------------------------------------------------- |
+| 运行平台        | Cloudflare Workers                                   |
+| 数据库          | Cloudflare D1                                        |
+| 知识库          | Cloudflare AI Search                                 |
+| AI 模型         | Cloudflare Workers AI                                |
+| 后台项目        | [admin](../admin)                                    |
+| Web Chat Widget | [web-widget](../web-widget)                          |
+| 架构文档        | [code-architecture.md](../docs/code-architecture.md) |
 
 ## 架构图
 
@@ -409,8 +409,8 @@ pnpm preview
   src="http://localhost:5174/widget/supportly.js"
   data-channel-id="ch_xxx"
   data-title="在线客服"
-  async>
-</script>
+  async
+></script>
 ```
 
 生产环境建议把 `web-widget/dist` 上传到 Cloudflare Pages 或其他静态 CDN，然后在 Admin 中配置：
@@ -642,8 +642,14 @@ src/
 export interface ChannelAdapter {
   readonly type: ChannelType;
   verify(request: Request, account: ChannelAccount): Promise<void>;
-  parseInbound(request: Request, account: ChannelAccount): Promise<InboundMessage[]>;
-  sendMessage(account: ChannelAccount, message: OutboundMessage): Promise<SendMessageResult>;
+  parseInbound(
+    request: Request,
+    account: ChannelAccount,
+  ): Promise<InboundMessage[]>;
+  sendMessage(
+    account: ChannelAccount,
+    message: OutboundMessage,
+  ): Promise<SendMessageResult>;
 }
 ```
 
@@ -714,13 +720,13 @@ retrieval_type = vector
 
 ## 环境变量
 
-| 变量 | 说明 |
-| --- | --- |
-| `KB_INSTANCE_NAME` | AI Search instance name |
-| `DEFAULT_AI_MODEL` | Workers AI 默认生成模型 |
-| `JWT_SECRET` | 后台登录 token 签名密钥 |
+| 变量                  | 说明                            |
+| --------------------- | ------------------------------- |
+| `KB_INSTANCE_NAME`    | AI Search instance name         |
+| `DEFAULT_AI_MODEL`    | Workers AI 默认生成模型         |
+| `JWT_SECRET`          | 后台登录 token 签名密钥         |
 | `WIDGET_TOKEN_SECRET` | Web Chat visitor token 签名密钥 |
-| `ENCRYPTION_KEY` | 预留，加密敏感配置 |
+| `ENCRYPTION_KEY`      | 预留，加密敏感配置              |
 
 ## 常见问题
 
@@ -783,14 +789,14 @@ Webhook 地址在哪里看？
 
 ## 相关文档
 
-| 文档 | 说明 |
-| --- | --- |
-| `../docs/code-architecture.md` | 代码架构方案 |
-| `../docs/conversation-only-mvp.md` | 会话 MVP 方案 |
-| `../docs/database-design.md` | 数据库设计 |
-| `../docs/web-admin-plan.md` | Admin 后台方案 |
-| `../docs/web-chat-widget-integration-plan.md` | Web Chat Widget 方案 |
-| `../docs/telegram-bot-integration-case.md` | Telegram Bot 接入案例 |
+| 文档                                          | 说明                  |
+| --------------------------------------------- | --------------------- |
+| `../docs/code-architecture.md`                | 代码架构方案          |
+| `../docs/conversation-only-mvp.md`            | 会话 MVP 方案         |
+| `../docs/database-design.md`                  | 数据库设计            |
+| `../docs/web-admin-plan.md`                   | Admin 后台方案        |
+| `../docs/web-chat-widget-integration-plan.md` | Web Chat Widget 方案  |
+| `../docs/telegram-bot-integration-case.md`    | Telegram Bot 接入案例 |
 
 ## License
 
