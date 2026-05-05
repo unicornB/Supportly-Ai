@@ -78,6 +78,8 @@ Widget Demo：https://supportly.comarket.dev/demo
 
 测试 Demo 机器人：[@my_supportly_ai_bot](https://t.me/my_supportly_ai_bot)
 
+QQ 交流群：1081883123
+
 ## 架构图
 
 ```text
