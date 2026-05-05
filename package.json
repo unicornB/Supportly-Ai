@@ -1,0 +1,26 @@
+{
+  "name": "supportly-server-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "db:migrate:local": "wrangler d1 migrations apply supportly --local",
+    "db:migrate:remote": "wrangler d1 migrations apply supportly --remote",
+    "db:seed:local": "wrangler d1 execute supportly --local --file seeds/default_admin.sql",
+    "db:seed:remote": "wrangler d1 execute supportly --remote --file seeds/default_admin.sql"
+  },
+  "dependencies": {
+    "hono": "^4.8.12",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250823.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.32.0"
+  }
+}
