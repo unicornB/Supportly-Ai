@@ -79,9 +79,10 @@ export class KnowledgeRepository {
           metadata_json,
           created_by_admin_user_id,
           created_at,
-          updated_at
+          updated_at,
+          indexed_at
         )
-        VALUES (?, ?, 'upload', ?, ?, ?, 'indexed', ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, 'upload', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
       )
       .bind(
@@ -90,6 +91,7 @@ export class KnowledgeRepository {
         input.aiSearchInstanceId,
         input.aiSearchItemId ?? null,
         input.aiSearchPath,
+        input.status ?? "processing",
         input.fileName ?? null,
         input.fileSize ?? 0,
         input.mimeType ?? null,
@@ -97,7 +99,8 @@ export class KnowledgeRepository {
         input.metadataJson ?? "{}",
         input.createdByAdminUserId ?? null,
         now,
-        now
+        now,
+        input.indexedAt ?? (input.status === "indexed" ? now : null)
       )
       .run();
 

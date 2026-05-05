@@ -70,11 +70,13 @@ export type CreateKnowledgeDocumentInput = {
   aiSearchInstanceId: string;
   aiSearchItemId?: string;
   aiSearchPath: string;
+  status?: KnowledgeDocumentStatus;
   fileName?: string;
   fileSize?: number;
   mimeType?: string;
   checksum?: string;
   metadataJson?: string;
+  indexedAt?: string;
   createdByAdminUserId?: string;
 };
 

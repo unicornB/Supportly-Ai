@@ -20,6 +20,16 @@ export class AiSearchGateway {
     content: string | ArrayBuffer | ReadableStream;
     metadata?: Record<string, string>;
   }) {
+    return this.search.items.upload(input.path, input.content, {
+      metadata: input.metadata,
+    });
+  }
+
+  async uploadDocumentAndPoll(input: {
+    path: string;
+    content: string | ArrayBuffer | ReadableStream;
+    metadata?: Record<string, string>;
+  }) {
     return this.search.items.uploadAndPoll(input.path, input.content, {
       metadata: input.metadata,
       timeoutMs: 30_000,

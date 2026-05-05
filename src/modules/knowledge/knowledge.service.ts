@@ -32,26 +32,41 @@ export class KnowledgeService {
     const documentId = createId("kb");
     const safeName = input.file.name.replace(/[^\w.\-]+/g, "_");
     const path = `${KNOWLEDGE_FOLDER_PREFIX}${documentId}/${safeName}`;
-    const item = await this.aiSearch.uploadDocument({
-      path,
-      content: await input.file.arrayBuffer(),
-      metadata: {
-        filename: input.file.name,
-        source: "upload",
-      },
-    });
+    const content = await readKnowledgeFileContent(input.file);
+    const item = await this.uploadToAiSearch(path, content);
 
-    return this.knowledge.create({
+    const document = await this.knowledge.create({
       title: input.title || input.file.name,
       aiSearchInstanceId: this.aiSearch.instanceName,
       aiSearchItemId: item.id,
       aiSearchPath: item.key || path,
+      status: mapAiSearchStatus(item.status),
       fileName: input.file.name,
       fileSize: input.file.size,
       mimeType: input.file.type || undefined,
       metadataJson: stringifyJson({ filename: input.file.name, source: "upload" }),
+      indexedAt: mapAiSearchStatus(item.status) === "indexed" ? item.last_seen_at ?? item.created_at : undefined,
       createdByAdminUserId: input.createdByAdminUserId,
     });
+
+    try {
+      await this.syncFromAiSearch();
+      return (await this.knowledge.findById(document.id)) ?? document;
+    } catch {
+      return document;
+    }
+  }
+
+  private async uploadToAiSearch(path: string, content: string | ArrayBuffer) {
+    try {
+      return await this.aiSearch.uploadDocument({ path, content });
+    } catch (error) {
+      throw new AppError(
+        "KNOWLEDGE_UPLOAD_FAILED",
+        `AI Search upload failed: ${error instanceof Error ? error.message : String(error)}`,
+        502
+      );
+    }
   }
 
   async deleteDocument(id: string) {
@@ -135,4 +150,31 @@ function pickString(value: unknown): string | undefined {
 
 function fileNameFromKey(key: string): string {
   return key.split("/").filter(Boolean).at(-1) ?? key;
+}
+
+async function readKnowledgeFileContent(file: File): Promise<string | ArrayBuffer> {
+  if (isTextKnowledgeFile(file)) {
+    return file.text();
+  }
+  return file.arrayBuffer();
+}
+
+function isTextKnowledgeFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return (
+    type.startsWith("text/") ||
+    type === "application/json" ||
+    type === "application/xml" ||
+    type === "application/x-yaml" ||
+    name.endsWith(".md") ||
+    name.endsWith(".mdx") ||
+    name.endsWith(".txt") ||
+    name.endsWith(".html") ||
+    name.endsWith(".htm") ||
+    name.endsWith(".json") ||
+    name.endsWith(".csv") ||
+    name.endsWith(".yaml") ||
+    name.endsWith(".yml")
+  );
 }

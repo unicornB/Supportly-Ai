@@ -36,15 +36,14 @@
   <img height="96" src="./docs/logo/logo.png" alt="Supportly">
 </p>
 
-| 模块            | 说明                                                 |
-| --------------- | ---------------------------------------------------- |
-| 运行平台        | Cloudflare Workers                                   |
-| 数据库          | Cloudflare D1                                        |
-| 知识库          | Cloudflare AI Search                                 |
-| AI 模型         | Cloudflare Workers AI                                |
-| 后台项目        | [admin](../admin)                                    |
-| Web Chat Widget | [web-widget](../web-widget)                          |
-| 架构文档        | [code-architecture.md](../docs/code-architecture.md) |
+| 模块            | 说明                                                                  |
+| --------------- | --------------------------------------------------------------------- |
+| 运行平台        | Cloudflare Workers                                                    |
+| 数据库          | Cloudflare D1                                                         |
+| 知识库          | Cloudflare AI Search                                                  |
+| AI 模型         | Cloudflare Workers AI                                                 |
+| 后台项目        | [admin](https://github.com/unicornB/Supportly-Ai-Admin.git)           |
+| Web Chat Widget | [web-widget](https://github.com/unicornB/Supportly-Ai-Web-Widget.git) |
 
 ## 产品截图
 
