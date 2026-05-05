@@ -16,11 +16,20 @@ export const app = new Hono<AppContext>();
 
 app.use("*", requestIdMiddleware());
 app.use(
-  "/api/widget/*",
+  "*",
   cors({
     origin: "*",
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Authorization", "Content-Type"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: [
+      "Authorization",
+      "Content-Type",
+      "X-Admin-User-Id",
+      "X-Debug-Response",
+      "X-Request-Id",
+      "X-Supportly-Signature",
+      "X-Telegram-Bot-Api-Secret-Token",
+    ],
+    exposeHeaders: ["X-Request-Id"],
     maxAge: 86400,
   })
 );
