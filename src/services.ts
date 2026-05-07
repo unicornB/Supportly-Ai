@@ -14,6 +14,7 @@ import { KnowledgeRepository } from "./modules/knowledge/knowledge.repository";
 import { KnowledgeService } from "./modules/knowledge/knowledge.service";
 import { MessageRepository } from "./modules/messages/message.repository";
 import { MessageService } from "./modules/messages/message.service";
+import { RealtimeService } from "./modules/realtime/realtime.service";
 import { AdminUserRepository } from "./modules/users/admin-user.repository";
 import { AuthService } from "./modules/users/auth.service";
 import { WidgetService } from "./modules/widget/widget.service";
@@ -34,7 +35,8 @@ export function createServices(env: Env) {
   const aiService = new AiService(aiSearchGateway, workersAiGateway, messageRepository);
   const channelService = new ChannelService(channelRepository, adapters);
   const conversationService = new ConversationService(conversationRepository, messageRepository, aiService);
-  const messageService = new MessageService(channelService, conversationRepository, messageRepository);
+  const realtimeService = new RealtimeService(env);
+  const messageService = new MessageService(channelService, conversationRepository, messageRepository, realtimeService);
   const knowledgeService = new KnowledgeService(knowledgeRepository, aiSearchGateway);
   const authService = new AuthService(adminUserRepository, env.JWT_SECRET ?? "supportly-dev-secret-change-before-deploy");
   const widgetService = new WidgetService(
@@ -42,6 +44,7 @@ export function createServices(env: Env) {
     conversationRepository,
     messageRepository,
     conversationService,
+    realtimeService,
     env.WIDGET_TOKEN_SECRET ?? env.JWT_SECRET ?? "supportly-dev-secret-change-before-deploy"
   );
 
@@ -50,6 +53,7 @@ export function createServices(env: Env) {
     channels: channelService,
     conversations: conversationService,
     messages: messageService,
+    realtime: realtimeService,
     knowledge: knowledgeService,
     auth: authService,
     widget: widgetService,

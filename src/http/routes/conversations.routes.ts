@@ -6,6 +6,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { ok } from "../responses";
 
 const sendMessageSchema = z.object({
+  clientMessageId: z.string().trim().min(1).max(128).optional(),
   content: z.string().min(1),
 });
 
@@ -29,7 +30,7 @@ conversationsRoutes.get("/:id", async (c) => {
 
 conversationsRoutes.get("/:id/messages", async (c) => {
   const services = createServices(c.env);
-  return ok(await services.messages.listConversationMessages(c.req.param("id")));
+  return ok(await services.messages.listConversationMessages(c.req.param("id"), c.req.query("after") || undefined));
 });
 
 conversationsRoutes.post("/:id/messages", async (c) => {
@@ -39,6 +40,7 @@ conversationsRoutes.post("/:id/messages", async (c) => {
     await services.messages.sendAgentMessage({
       conversationId: c.req.param("id"),
       adminUserId: c.get("adminUserId"),
+      clientMessageId: input.clientMessageId,
       content: input.content,
     })
   );

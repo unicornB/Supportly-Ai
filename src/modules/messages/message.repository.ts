@@ -21,6 +21,7 @@ export type CreateOutboundMessageInput = {
   channelAccountId: string;
   senderAdminUserId?: string;
   senderType: "agent" | "ai";
+  clientMessageId?: string;
   content: string;
   status: "sending" | "sent" | "failed";
   aiMetadata?: unknown;
@@ -47,6 +48,39 @@ export class MessageRepository {
         `
       )
       .bind(channelAccountId, externalMessageId)
+      .first<MessageRow>();
+
+    return row ? mapMessage(row) : null;
+  }
+
+  async findByClientMessageId(input: {
+    conversationId: string;
+    senderType: "agent" | "ai";
+    senderAdminUserId?: string;
+    clientMessageId: string;
+  }): Promise<Message | null> {
+    const row = await this.db
+      .prepare(
+        `
+        SELECT *
+        FROM messages
+        WHERE conversation_id = ?
+          AND sender_type = ?
+          AND (
+            (? IS NULL AND sender_admin_user_id IS NULL)
+            OR sender_admin_user_id = ?
+          )
+          AND client_message_id = ?
+        LIMIT 1
+        `
+      )
+      .bind(
+        input.conversationId,
+        input.senderType,
+        input.senderAdminUserId ?? null,
+        input.senderAdminUserId ?? null,
+        input.clientMessageId
+      )
       .first<MessageRow>();
 
     return row ? mapMessage(row) : null;
@@ -163,6 +197,7 @@ export class MessageRepository {
           direction,
           sender_type,
           sender_admin_user_id,
+          client_message_id,
           message_type,
           content,
           attachments_json,
@@ -172,7 +207,7 @@ export class MessageRepository {
           created_at,
           updated_at
         )
-        VALUES (?, ?, ?, 'outbound', ?, ?, 'text', ?, '[]', ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, 'outbound', ?, ?, ?, 'text', ?, '[]', ?, ?, ?, ?, ?)
         `
       )
       .bind(
@@ -181,6 +216,7 @@ export class MessageRepository {
         input.channelAccountId,
         input.senderType,
         input.senderAdminUserId ?? null,
+        input.clientMessageId ?? null,
         input.content,
         stringifyJson(input.aiMetadata ?? {}),
         stringifyJson(input.aiReferences ?? []),

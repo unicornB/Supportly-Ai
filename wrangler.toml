@@ -7,6 +7,18 @@ binding = "DB"
 database_name = "supportly"
 database_id = "b1c96ba1-26be-4b78-bdb6-ab0d3ebb1365"
 
+[[durable_objects.bindings]]
+name = "VISITOR_STREAM"
+class_name = "VisitorStream"
+
+[[durable_objects.bindings]]
+name = "ADMIN_STREAM"
+class_name = "AdminStream"
+
+[[migrations]]
+tag = "v1_realtime_streams"
+new_sqlite_classes = ["VisitorStream", "AdminStream"]
+
 [[ai_search_namespaces]]
 binding = "AI_SEARCH"
 namespace = "aidesk"

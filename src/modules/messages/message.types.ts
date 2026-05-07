@@ -11,6 +11,7 @@ export type Message = {
   direction: MessageDirection;
   senderType: SenderType;
   senderAdminUserId: string | null;
+  clientMessageId: string | null;
   messageType: MessageType;
   content: string | null;
   attachmentsJson: string;
@@ -31,6 +32,7 @@ export type MessageRow = {
   direction: MessageDirection;
   sender_type: SenderType;
   sender_admin_user_id: string | null;
+  client_message_id: string | null;
   message_type: MessageType;
   content: string | null;
   attachments_json: string;
@@ -52,6 +54,7 @@ export function mapMessage(row: MessageRow): Message {
     direction: row.direction,
     senderType: row.sender_type,
     senderAdminUserId: row.sender_admin_user_id,
+    clientMessageId: row.client_message_id,
     messageType: row.message_type,
     content: row.content,
     attachmentsJson: row.attachments_json,

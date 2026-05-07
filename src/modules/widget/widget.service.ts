@@ -12,6 +12,7 @@ import type { ChannelService } from "../channels/channel.service";
 import type { ConversationRepository } from "../conversations/conversation.repository";
 import type { ConversationService } from "../conversations/conversation.service";
 import type { MessageRepository } from "../messages/message.repository";
+import type { RealtimeService } from "../realtime/realtime.service";
 import type { VisitorTokenClaims } from "./widget.types";
 import { toWidgetMessage } from "./widget.types";
 
@@ -23,6 +24,7 @@ export class WidgetService {
     private readonly conversations: ConversationRepository,
     private readonly messages: MessageRepository,
     private readonly conversationService: ConversationService,
+    private readonly realtime: RealtimeService,
     private readonly tokenSecret: string
   ) {}
 
@@ -65,6 +67,7 @@ export class WidgetService {
   async sendVisitorMessage(input: {
     conversationId: string;
     token: string;
+    clientMessageId?: string;
     content: string;
     pageUrl?: string;
     pageTitle?: string;
@@ -76,7 +79,9 @@ export class WidgetService {
     const result = await this.conversationService.receiveInboundMessage({
       channelAccount: account,
       inbound: {
-        externalMessageId: createId("widget_evt"),
+        externalMessageId: input.clientMessageId
+          ? `widget:${claims.visitorId}:${input.clientMessageId}`
+          : createId("widget_evt"),
         externalContactId: claims.visitorId,
         externalThreadId: claims.visitorId,
         contactName: "匿名访客",
@@ -97,6 +102,21 @@ export class WidgetService {
       await this.messages.markSent(result.aiMessage.id, result.aiMessage.id);
     }
 
+    const conversation = result.duplicate ? null : await this.conversations.findById(result.conversationId);
+    if (conversation) {
+      await this.realtime.notifyMessageCreated({
+        conversation,
+        message: result.inboundMessage,
+      });
+
+      if (result.aiMessage) {
+        await this.realtime.notifyMessageCreated({
+          conversation,
+          message: { ...result.aiMessage, status: "sent" },
+        });
+      }
+    }
+
     return {
       conversationId: result.conversationId,
       inboundMessage: toWidgetMessage(result.inboundMessage),
@@ -109,6 +129,10 @@ export class WidgetService {
     await this.verifyConversationAccess(input.conversationId, input.token);
     const messages = await this.messages.listByConversationAfter(input.conversationId, input.afterMessageId, 100);
     return messages.map(toWidgetMessage);
+  }
+
+  requireConversationAccess(conversationId: string, token: string): Promise<VisitorTokenClaims> {
+    return this.verifyConversationAccess(conversationId, token);
   }
 
   private assertWebChatChannel(account: ChannelAccount): void {
