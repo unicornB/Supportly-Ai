@@ -72,6 +72,8 @@ Widget Demo：https://supportly.comarket.dev/demo
 
 ![Supportly Web Chat Widget](./docs/screenshot/web-widget.png)
 
+![Supportly Web Chat Widget Mobile](./docs/screenshot/web-widget-mobile.png)
+
 ### Telegram Bot
 
 ![Supportly Telegram Bot](./docs/screenshot/telegarm.png)
