@@ -211,10 +211,12 @@ AI 回复流程：
   -> AI Search 检索知识库
   -> Workers AI 生成回答
   -> 写入 messages
-  -> 渠道 Adapter 投递或 Widget 轮询读取
+  -> 渠道 Adapter 投递或 WebSocket 实时推送
 ```
 
 如果 AI Search 没有命中文档，当前默认不强行编造回复。
+
+Widget 发送消息时，HTTP 接口只同步完成访客消息写入并立即返回；AI Search / Workers AI 回复在 Worker `waitUntil` 后台任务中生成，完成后通过 WebSocket 推送给访客和 Admin。
 
 ## 功能特性
 
@@ -716,7 +718,9 @@ export interface ChannelAdapter {
 visitor token 签发
 visitor token 校验
 Widget 消息发送
-Widget 消息轮询
+Widget 历史消息读取
+Widget WebSocket 实时推送
+AI 回复后台生成
 ```
 
 ## AI Search

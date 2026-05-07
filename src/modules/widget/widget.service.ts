@@ -6,12 +6,14 @@ import {
   timingSafeEqual,
 } from "../../gateways/crypto.gateway";
 import { createId } from "../../shared/ids";
+import { logger } from "../../shared/logger";
 import { nowIso } from "../../shared/time";
 import type { ChannelAccount } from "../channels/channel.types";
 import type { ChannelService } from "../channels/channel.service";
 import type { ConversationRepository } from "../conversations/conversation.repository";
 import type { ConversationService } from "../conversations/conversation.service";
 import type { MessageRepository } from "../messages/message.repository";
+import type { Message } from "../messages/message.types";
 import type { RealtimeService } from "../realtime/realtime.service";
 import type { VisitorTokenClaims } from "./widget.types";
 import { toWidgetMessage } from "./widget.types";
@@ -71,7 +73,7 @@ export class WidgetService {
     content: string;
     pageUrl?: string;
     pageTitle?: string;
-  }) {
+  }, options: { createAiReply?: boolean; notifyRealtime?: boolean } = {}) {
     const claims = await this.verifyConversationAccess(input.conversationId, input.token);
     const account = await this.channels.getAccount(claims.channelAccountId);
     this.assertWebChatChannel(account);
@@ -96,12 +98,65 @@ export class WidgetService {
         },
         receivedAt: nowIso(),
       },
-    });
+    }, { createAiReply: options.createAiReply });
 
     if (result.aiMessage) {
       await this.messages.markSent(result.aiMessage.id, result.aiMessage.id);
     }
 
+    if (options.notifyRealtime !== false) {
+      await this.notifyVisitorMessageResult(result);
+    }
+
+    return {
+      conversationId: result.conversationId,
+      inboundMessage: toWidgetMessage(result.inboundMessage),
+      aiMessage: result.aiMessage ? toWidgetMessage({ ...result.aiMessage, status: "sent" }) : null,
+      duplicate: result.duplicate,
+    };
+  }
+
+  async completeVisitorMessage(input: { conversationId: string; inboundMessageId: string }): Promise<void> {
+    try {
+      const conversation = await this.conversations.findById(input.conversationId);
+      const inboundMessage = await this.messages.findById(input.inboundMessageId);
+      if (!conversation || !inboundMessage || inboundMessage.conversationId !== conversation.id) return;
+
+      await this.realtime.notifyMessageCreated({
+        conversation,
+        message: inboundMessage,
+      });
+
+      const aiMessage = await this.conversationService.createAiReply({
+        conversationId: conversation.id,
+        channelAccountId: conversation.channelAccountId,
+        messageContent: inboundMessage.content,
+        handoffStatus: conversation.handoffStatus,
+      });
+      if (!aiMessage) return;
+
+      await this.messages.markSent(aiMessage.id, aiMessage.id);
+
+      const updatedConversation = (await this.conversations.findById(conversation.id)) ?? conversation;
+      await this.realtime.notifyMessageCreated({
+        conversation: updatedConversation,
+        message: { ...aiMessage, status: "sent" },
+      });
+    } catch (error) {
+      logger.warn("widget_message_background_failed", {
+        conversationId: input.conversationId,
+        inboundMessageId: input.inboundMessageId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async notifyVisitorMessageResult(result: {
+    conversationId: string;
+    inboundMessage: Message;
+    aiMessage: Message | null;
+    duplicate: boolean;
+  }): Promise<void> {
     const conversation = result.duplicate ? null : await this.conversations.findById(result.conversationId);
     if (conversation) {
       await this.realtime.notifyMessageCreated({
@@ -116,13 +171,6 @@ export class WidgetService {
         });
       }
     }
-
-    return {
-      conversationId: result.conversationId,
-      inboundMessage: toWidgetMessage(result.inboundMessage),
-      aiMessage: result.aiMessage ? toWidgetMessage({ ...result.aiMessage, status: "sent" }) : null,
-      duplicate: result.duplicate,
-    };
   }
 
   async listMessages(input: { conversationId: string; token: string; afterMessageId?: string }) {

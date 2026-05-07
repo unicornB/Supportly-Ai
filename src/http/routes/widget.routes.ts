@@ -49,16 +49,28 @@ widgetRoutes.post("/conversations", async (c) => {
 widgetRoutes.post("/conversations/:conversationId/messages", async (c) => {
   const input = sendMessageSchema.parse(await c.req.json());
   const services = createServices(c.env);
-  return ok(
-    await services.widget.sendVisitorMessage({
+  const result = await services.widget.sendVisitorMessage(
+    {
       conversationId: c.req.param("conversationId"),
       token: getBearerToken(c.req.raw),
       clientMessageId: input.clientMessageId,
       content: input.content,
       pageUrl: input.pageUrl,
       pageTitle: input.pageTitle,
-    })
+    },
+    { createAiReply: false, notifyRealtime: false }
   );
+
+  if (!result.duplicate) {
+    c.executionCtx.waitUntil(
+      services.widget.completeVisitorMessage({
+        conversationId: result.conversationId,
+        inboundMessageId: result.inboundMessage.id,
+      })
+    );
+  }
+
+  return ok(result);
 });
 
 widgetRoutes.get("/conversations/:conversationId/messages", async (c) => {

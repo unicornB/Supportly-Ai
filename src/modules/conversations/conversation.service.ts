@@ -28,7 +28,12 @@ export class ConversationService {
   async receiveInboundMessage(input: {
     channelAccount: ChannelAccount;
     inbound: InboundMessage;
-  }): Promise<{ conversationId: string; inboundMessage: Message; aiMessage: Message | null; duplicate: boolean }> {
+  }, options: { createAiReply?: boolean } = {}): Promise<{
+    conversationId: string;
+    inboundMessage: Message;
+    aiMessage: Message | null;
+    duplicate: boolean;
+  }> {
     if (input.inbound.externalMessageId) {
       const existingMessage = await this.messages.findByExternalMessageId(
         input.channelAccount.id,
@@ -71,16 +76,21 @@ export class ConversationService {
 
     await this.conversations.touchAfterInbound(conversation.id, inboundMessage.id, inboundMessage.createdAt);
 
-    const aiMessage = await this.ai.maybeCreateReply({
+    if (options.createAiReply === false) {
+      return {
+        conversationId: conversation.id,
+        inboundMessage,
+        aiMessage: null,
+        duplicate: false,
+      };
+    }
+
+    const aiMessage = await this.createAiReply({
       conversationId: conversation.id,
       channelAccountId: input.channelAccount.id,
       messageContent: inboundMessage.content,
       handoffStatus: conversation.handoffStatus,
     });
-
-    if (aiMessage) {
-      await this.conversations.touchAfterOutbound(conversation.id, aiMessage.id, aiMessage.createdAt);
-    }
 
     return {
       conversationId: conversation.id,
@@ -88,6 +98,21 @@ export class ConversationService {
       aiMessage,
       duplicate: false,
     };
+  }
+
+  async createAiReply(input: {
+    conversationId: string;
+    channelAccountId: string;
+    messageContent: string | null;
+    handoffStatus: "bot" | "agent";
+  }): Promise<Message | null> {
+    const aiMessage = await this.ai.maybeCreateReply(input);
+
+    if (aiMessage) {
+      await this.conversations.touchAfterOutbound(input.conversationId, aiMessage.id, aiMessage.createdAt);
+    }
+
+    return aiMessage;
   }
 
   async setHandoff(id: string, status: "bot" | "agent") {
