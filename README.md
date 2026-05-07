@@ -804,16 +804,128 @@ http://localhost:5174/widget/supportly.js
 
 ## 推荐测试问题
 
+这些问题可以用于测试 `docs/supportly-knowledge-base` 上传后的知识库召回和 AI 回复质量。
+
+### 基础介绍
+
 ```text
-退款多久到账？
-订单多久发货？
-怎么查看物流？
-忘记密码怎么办？
-Telegram Bot 怎么接入？
-Webhook 地址在哪里看？
+Supportly 是做什么的？
+Supportly 适合什么团队使用？
+Supportly 现在是 SaaS 吗？
+当前版本支持哪些客服渠道？
+Supportly 用了哪些 Cloudflare 产品？
+Supportly 支持 WhatsApp 或微信吗？
+当前版本不支持哪些功能？
+Web Chat、Telegram、Custom Webhook 有什么区别？
 ```
 
-如果知识库没有对应内容，AI 不应该随意编造答案。
+### 快速上手
+
+```text
+本地怎么启动 Supportly？
+默认管理员账号密码是什么？
+后端默认跑在哪个端口？
+Admin 后台怎么启动？
+Web Widget 怎么本地预览？
+怎么最快跑通一条客服消息？
+为什么本地开发也会调用 Cloudflare AI？
+生产环境上线前要改哪些配置？
+```
+
+### Web Chat Widget
+
+```text
+网站怎么接入 Supportly 客服？
+data-channel-id 是什么？
+为什么 Widget 地址是 /widget/supportly.js？
+Widget 为什么用 iframe？
+访客不登录也能聊天吗？
+visitor token 是干什么的？
+Widget 发送失败怎么排查？
+Widget 出现 CORS 报错怎么办？
+Widget 消息重复显示怎么办？
+Widget 静态文件推荐部署到哪里？
+```
+
+### 实时消息
+
+```text
+Web Chat 现在支持 WebSocket 吗？
+客服回复后访客怎么实时收到？
+WebSocket 断开后会怎么补消息？
+发送消息为什么还是走 HTTP？
+wsBaseUrl 应该怎么配置？
+Cloudflare 上怎么配置 wss？
+```
+
+### Admin 后台
+
+```text
+后台会话列表怎么看？
+未读数什么时候会清零？
+客服怎么回复客户？
+消息状态 sent 和 failed 分别是什么意思？
+怎么切换人工接管？
+切换到人工后 AI 还会自动回复吗？
+怎么切回机器人？
+关闭会话后会发生什么？
+客服处理客户问题时应该注意什么？
+```
+
+### Telegram Bot
+
+```text
+Telegram Bot Token 怎么申请？
+Bot Token 可以发给客服排查吗？
+Telegram 渠道怎么创建？
+Webhook Secret 是干什么的？
+Telegram Webhook 地址格式是什么？
+setWebhook 返回 404 怎么办？
+Webhook 测试失败怎么排查？
+Telegram 收得到客户消息但发不出回复怎么办？
+```
+
+### Custom Webhook
+
+```text
+自定义系统怎么接入 Supportly？
+入站 Webhook 地址是什么？
+Custom Webhook 请求 JSON 应该长什么样？
+contact.external_id 有什么用？
+如果没有用户 ID 会怎么样？
+outbound_url 是什么？
+客服回复怎么推回外部系统？
+自定义 Webhook 签名怎么校验？
+消息没有进入后台怎么排查？
+```
+
+### 知识库 / AI Search
+
+```text
+知识库支持上传什么格式？
+单个知识库文件最大多大？
+AI Search 是做什么的？
+上传文档后为什么 AI 还没回复？
+Admin 里的“同步 AI Search”有什么用？
+KB_INSTANCE_NAME 配错会怎样？
+retrieval_type hybrid 报错怎么办？
+怎么让 AI 回复更准确？
+为什么 AI 不应该编造知识库没有的内容？
+```
+
+### 边界测试
+
+```text
+请告诉我 Supportly 的价格套餐。
+请给我一个真实的 Telegram Bot Token 示例。
+Supportly 能保证 100% 不丢消息吗？
+现在是否已经支持企业微信正式接入？
+如果我没有 Cloudflare 账号能不能部署？
+我想上传 50MB PDF，可以吗？
+AI 没命中文档时应该怎么回答？
+```
+
+如果知识库没有对应内容，AI 不应该随意编造答案；涉及 Token、Secret、密码等敏感信息时，不应要求用户公开发送。
 
 ## 相关文档
 
