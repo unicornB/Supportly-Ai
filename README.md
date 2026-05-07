@@ -36,14 +36,15 @@
   <img height="96" src="./docs/logo/logo.png" alt="Supportly">
 </p>
 
-| 模块            | 说明                                                                  |
-| --------------- | --------------------------------------------------------------------- |
-| 运行平台        | Cloudflare Workers                                                    |
-| 数据库          | Cloudflare D1                                                         |
-| 知识库          | Cloudflare AI Search                                                  |
-| AI 模型         | Cloudflare Workers AI                                                 |
-| 后台项目        | [admin](https://github.com/unicornB/Supportly-Ai-Admin.git)           |
-| Web Chat Widget | [web-widget](https://github.com/unicornB/Supportly-Ai-Web-Widget.git) |
+| 模块            | 说明                                                                          |
+| --------------- | ----------------------------------------------------------------------------- |
+| 运行平台        | Cloudflare Workers                                                            |
+| 数据库          | Cloudflare D1                                                                 |
+| 知识库          | Cloudflare AI Search                                                          |
+| AI 模型         | Cloudflare Workers AI                                                         |
+| 后台项目        | [admin](https://github.com/unicornB/Supportly-Ai-Admin.git)                   |
+| Web Chat Widget | [web-widget](https://github.com/unicornB/Supportly-Ai-Web-Widget.git)         |
+| UniApp SDK      | [UniApp-SDK](https://github.com/unicornB/Supportly-Ai-UniApp-SDK.git)         |
 
 ## 产品截图
 
@@ -230,6 +231,7 @@ Widget 发送消息时，HTTP 接口只同步完成访客消息写入并立即�
 - [x] Telegram Bot 接入
 - [x] Telegram Webhook 设置和测试
 - [x] Web Chat Widget 接入
+- [x] UniApp SDK 接入
 - [x] 匿名访客会话
 - [x] Visitor Token 校验
 - [x] 会话列表
@@ -448,6 +450,26 @@ pnpm preview
 ```text
 VITE_PUBLIC_WIDGET_BASE_URL=https://your-widget-domain.com
 ```
+
+## UniApp SDK
+
+UniApp SDK 项目地址：
+
+```text
+https://github.com/unicornB/Supportly-Ai-UniApp-SDK.git
+```
+
+UniApp SDK 是纯 JS Headless 客服聊天 SDK，复用 `server-api` 的 Widget API：
+
+```text
+发送消息：HTTP POST
+接收消息：WebSocket
+历史消息：HTTP GET
+断线补偿：HTTP GET after=lastMessageId
+本地会话：uni storage
+```
+
+适合在 App、小程序、H5 等 uni-app 项目中接入 Supportly 客服能力。页面 UI 由业务项目自己实现，SDK 只负责会话初始化、消息发送、实时接收、历史同步和重连。
 
 ## Telegram Bot 接入
 
@@ -940,6 +962,7 @@ AI 没命中文档时应该怎么回答？
 | `../docs/database-design.md`                  | 数据库设计            |
 | `../docs/web-admin-plan.md`                   | Admin 后台方案        |
 | `../docs/web-chat-widget-integration-plan.md` | Web Chat Widget 方案  |
+| `../docs/uniapp-sdk-plan.md`                  | UniApp SDK 方案       |
 | `../docs/telegram-bot-integration-case.md`    | Telegram Bot 接入案例 |
 
 ## License
