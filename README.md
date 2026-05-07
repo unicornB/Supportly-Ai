@@ -72,7 +72,9 @@ Widget Demo：https://supportly.comarket.dev/demo
 
 ![Supportly Web Chat Widget](./docs/screenshot/web-widget.png)
 
-![Supportly Web Chat Widget Mobile](./docs/screenshot/web-widget-mobile.png)
+<p align="center">
+  <img width="320" src="./docs/screenshot/web-widget-mobile.png" alt="Supportly Web Chat Widget Mobile">
+</p>
 
 ### Telegram Bot
 
