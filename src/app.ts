@@ -23,13 +23,14 @@ app.use(
     allowHeaders: [
       "Authorization",
       "Content-Type",
+      "Range",
       "X-Admin-User-Id",
       "X-Debug-Response",
       "X-Request-Id",
       "X-Supportly-Signature",
       "X-Telegram-Bot-Api-Secret-Token",
     ],
-    exposeHeaders: ["X-Request-Id"],
+    exposeHeaders: ["Accept-Ranges", "Content-Length", "Content-Range", "Content-Type", "X-Request-Id"],
     maxAge: 86400,
   })
 );

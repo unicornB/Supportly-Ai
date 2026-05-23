@@ -73,6 +73,29 @@ widgetRoutes.post("/conversations/:conversationId/messages", async (c) => {
   return ok(result);
 });
 
+widgetRoutes.post("/conversations/:conversationId/messages/media", async (c) => {
+  const formData = await c.req.formData();
+  const file = formData.get("file");
+  if (!isUploadedFile(file)) {
+    throw new AppError("VALIDATION_ERROR", "file is required", 400);
+  }
+
+  const services = createServices(c.env);
+  const result = await services.widget.sendVisitorMediaMessage({
+    conversationId: c.req.param("conversationId"),
+    token: getBearerToken(c.req.raw),
+    clientMessageId: readOptionalFormString(formData, "clientMessageId", 128),
+    content: readOptionalFormString(formData, "content", 2000),
+    file,
+    fileName: readOptionalFormString(formData, "fileName", 300),
+    mimeType: readOptionalFormString(formData, "mimeType", 100),
+    pageUrl: readOptionalFormString(formData, "pageUrl", 2048),
+    pageTitle: readOptionalFormString(formData, "pageTitle", 300),
+  });
+
+  return ok(result);
+});
+
 widgetRoutes.get("/conversations/:conversationId/messages", async (c) => {
   const services = createServices(c.env);
   return ok({
@@ -81,6 +104,19 @@ widgetRoutes.get("/conversations/:conversationId/messages", async (c) => {
       token: getBearerToken(c.req.raw),
       afterMessageId: c.req.query("after") || undefined,
     }),
+  });
+});
+
+widgetRoutes.get("/conversations/:conversationId/messages/:messageId/attachments/:index", async (c) => {
+  const services = createServices(c.env);
+  const conversationId = c.req.param("conversationId");
+  await services.widget.requireConversationAccess(conversationId, getVisitorToken(c.req.raw, c.req.query("token")));
+
+  return services.media.getMessageAttachmentResponse({
+    conversationId,
+    messageId: c.req.param("messageId"),
+    attachmentIndex: parseAttachmentIndex(c.req.param("index")),
+    request: c.req.raw,
   });
 });
 
@@ -102,6 +138,36 @@ function assertWebSocketRequest(request: Request): void {
   if (request.headers.get("upgrade")?.toLowerCase() !== "websocket") {
     throw new AppError("WEBSOCKET_REQUIRED", "WebSocket upgrade is required", 426);
   }
+}
+
+function isUploadedFile(value: unknown): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "size" in value &&
+    "stream" in value
+  );
+}
+
+function readOptionalFormString(formData: FormData, name: string, maxLength: number): string | undefined {
+  const value = formData.get(name);
+  if (typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > maxLength) {
+    throw new AppError("VALIDATION_ERROR", `${name} is too long`, 400);
+  }
+  return trimmed;
+}
+
+function parseAttachmentIndex(value: string): number {
+  const index = Number(value);
+  if (!Number.isInteger(index) || index < 0) {
+    throw new AppError("VALIDATION_ERROR", "Invalid attachment index", 400);
+  }
+  return index;
 }
 
 function createRealtimeRequest(request: Request, identityHeaders: Record<string, string>): Request {

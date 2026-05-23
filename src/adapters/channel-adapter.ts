@@ -1,14 +1,6 @@
 import { AppError } from "../shared/errors";
 import type { ChannelAccount, ChannelType } from "../modules/channels/channel.types";
-
-export type MessageAttachment = {
-  type: "image" | "file" | "audio" | "video";
-  url?: string;
-  fileId?: string;
-  mimeType?: string;
-  fileName?: string;
-  size?: number;
-};
+import type { MessageAttachment, MessageType } from "../modules/messages/message.types";
 
 export type InboundMessage = {
   externalMessageId?: string;
@@ -17,7 +9,7 @@ export type InboundMessage = {
   contactName?: string;
   contactAvatarUrl?: string;
   isAnonymous: boolean;
-  messageType: "text" | "image" | "file" | "audio" | "event";
+  messageType: MessageType;
   content?: string;
   attachments: MessageAttachment[];
   rawPayload: unknown;
@@ -28,8 +20,9 @@ export type OutboundMessage = {
   conversationId: string;
   externalThreadId: string;
   messageId: string;
-  messageType: "text";
-  content: string;
+  messageType: MessageType;
+  content: string | null;
+  attachments?: MessageAttachment[];
 };
 
 export type SendMessageResult = {

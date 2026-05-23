@@ -146,6 +146,10 @@ export class TelegramAdapter implements ChannelAdapter {
   }
 
   async sendMessage(account: ChannelAccount, message: OutboundMessage): Promise<SendMessageResult> {
+    if (message.messageType !== "text") {
+      throw new AppError("MESSAGE_TYPE_NOT_SUPPORTED", "Telegram media outbound is not supported yet", 400);
+    }
+
     const token = account.credentialCiphertext;
     if (!token) {
       throw new AppError("CHANNEL_CREDENTIAL_MISSING", "Telegram bot token is missing", 400);
@@ -156,7 +160,7 @@ export class TelegramAdapter implements ChannelAdapter {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         chat_id: message.externalThreadId,
-        text: message.content,
+        text: message.content ?? "",
       }),
     });
 

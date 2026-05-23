@@ -76,6 +76,7 @@ export type WorkersAiBinding = {
 
 export type Env = {
   DB: D1Database;
+  MEDIA_BUCKET?: R2Bucket;
   VISITOR_STREAM: DurableObjectNamespace;
   ADMIN_STREAM: DurableObjectNamespace;
   AI_SEARCH: AiSearchNamespaceBinding;

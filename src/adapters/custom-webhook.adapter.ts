@@ -17,7 +17,7 @@ const customWebhookSchema = z.object({
     .optional(),
   message: z.object({
     external_id: z.string().optional(),
-    type: z.enum(["text", "image", "file", "audio", "event"]).default("text"),
+    type: z.enum(["text", "image", "file", "audio", "video", "event"]).default("text"),
     text: z.string().optional(),
     attachments: z.array(z.record(z.unknown())).default([]),
   }),
@@ -83,6 +83,7 @@ export class CustomWebhookAdapter implements ChannelAdapter {
       message: {
         type: message.messageType,
         text: message.content,
+        attachments: message.attachments ?? [],
       },
     };
 

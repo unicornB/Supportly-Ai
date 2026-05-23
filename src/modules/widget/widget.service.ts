@@ -12,6 +12,7 @@ import type { ChannelAccount } from "../channels/channel.types";
 import type { ChannelService } from "../channels/channel.service";
 import type { ConversationRepository } from "../conversations/conversation.repository";
 import type { ConversationService } from "../conversations/conversation.service";
+import type { MediaService } from "../media/media.service";
 import type { MessageRepository } from "../messages/message.repository";
 import type { Message } from "../messages/message.types";
 import type { RealtimeService } from "../realtime/realtime.service";
@@ -27,6 +28,7 @@ export class WidgetService {
     private readonly messages: MessageRepository,
     private readonly conversationService: ConversationService,
     private readonly realtime: RealtimeService,
+    private readonly media: MediaService,
     private readonly tokenSecret: string
   ) {}
 
@@ -63,6 +65,76 @@ export class WidgetService {
       visitorId,
       visitorToken,
       expiresAt: new Date(expiresAt * 1000).toISOString(),
+    };
+  }
+
+  async sendVisitorMediaMessage(input: {
+    conversationId: string;
+    token: string;
+    clientMessageId?: string;
+    content?: string;
+    file: File;
+    fileName?: string;
+    mimeType?: string;
+    pageUrl?: string;
+    pageTitle?: string;
+  }) {
+    const claims = await this.verifyConversationAccess(input.conversationId, input.token);
+    const account = await this.channels.getAccount(claims.channelAccountId);
+    this.assertWebChatChannel(account);
+
+    const externalMessageId = input.clientMessageId
+      ? `widget:${claims.visitorId}:${input.clientMessageId}`
+      : createId("widget_evt");
+    const existingMessage = await this.messages.findByExternalMessageId(account.id, externalMessageId);
+    if (existingMessage) {
+      return {
+        conversationId: existingMessage.conversationId,
+        inboundMessage: toWidgetMessage(existingMessage),
+        aiMessage: null,
+        duplicate: true,
+      };
+    }
+
+    const messageId = createId("msg");
+    const upload = await this.media.storeUpload({
+      conversationId: input.conversationId,
+      messageId,
+      file: input.file,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+    });
+
+    const result = await this.conversationService.receiveInboundMessage({
+      channelAccount: account,
+      inbound: {
+        externalMessageId,
+        externalContactId: claims.visitorId,
+        externalThreadId: claims.visitorId,
+        contactName: "匿名访客",
+        isAnonymous: true,
+        messageType: upload.messageType,
+        content: normalizeOptionalContent(input.content),
+        attachments: [upload.attachment],
+        rawPayload: {
+          source: "web_chat_widget",
+          pageUrl: input.pageUrl,
+          pageTitle: input.pageTitle,
+        },
+        receivedAt: nowIso(),
+      },
+      messageId,
+    }, { createAiReply: false });
+
+    if (!result.duplicate) {
+      await this.notifyVisitorMessageResult(result);
+    }
+
+    return {
+      conversationId: result.conversationId,
+      inboundMessage: toWidgetMessage(result.inboundMessage),
+      aiMessage: null,
+      duplicate: result.duplicate,
     };
   }
 
@@ -237,6 +309,11 @@ export class WidgetService {
 
     return claims;
   }
+}
+
+function normalizeOptionalContent(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 function normalizeVisitorId(visitorId: string): string {

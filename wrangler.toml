@@ -7,6 +7,11 @@ binding = "DB"
 database_name = "supportly"
 database_id = "b1c96ba1-26be-4b78-bdb6-ab0d3ebb1365"
 
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "supportly"
+remote = true
+
 [[durable_objects.bindings]]
 name = "VISITOR_STREAM"
 class_name = "VisitorStream"

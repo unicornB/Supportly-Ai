@@ -28,6 +28,7 @@ export class ConversationService {
   async receiveInboundMessage(input: {
     channelAccount: ChannelAccount;
     inbound: InboundMessage;
+    messageId?: string;
   }, options: { createAiReply?: boolean } = {}): Promise<{
     conversationId: string;
     inboundMessage: Message;
@@ -59,6 +60,7 @@ export class ConversationService {
     });
 
     const inboundResult = await this.messages.createInbound({
+      id: input.messageId,
       conversationId: conversation.id,
       channelAccountId: input.channelAccount.id,
       inbound: input.inbound,

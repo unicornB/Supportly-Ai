@@ -1,7 +1,21 @@
 export type MessageDirection = "inbound" | "outbound" | "internal" | "system";
 export type SenderType = "customer" | "agent" | "ai" | "system";
 export type MessageStatus = "received" | "sending" | "sent" | "failed";
-export type MessageType = "text" | "image" | "file" | "audio" | "event";
+export type MessageType = "text" | "image" | "file" | "audio" | "video" | "event";
+
+export type MessageAttachment = {
+  type: "image" | "file" | "audio" | "video";
+  url?: string;
+  fileId?: string;
+  r2Key?: string;
+  mimeType?: string;
+  fileName?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  thumbnailR2Key?: string;
+};
 
 export type Message = {
   id: string;
@@ -66,4 +80,51 @@ export function mapMessage(row: MessageRow): Message {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function parseMessageAttachments(value: string | null | undefined): MessageAttachment[] {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isMessageAttachment);
+  } catch {
+    return [];
+  }
+}
+
+function isMessageAttachment(value: unknown): value is MessageAttachment {
+  if (!value || typeof value !== "object") return false;
+
+  const candidate = value as Record<string, unknown>;
+  if (
+    candidate.type !== "image" &&
+    candidate.type !== "file" &&
+    candidate.type !== "audio" &&
+    candidate.type !== "video"
+  ) {
+    return false;
+  }
+
+  return (
+    optionalString(candidate.url) &&
+    optionalString(candidate.fileId) &&
+    optionalString(candidate.r2Key) &&
+    optionalString(candidate.mimeType) &&
+    optionalString(candidate.fileName) &&
+    optionalNumber(candidate.size) &&
+    optionalNumber(candidate.width) &&
+    optionalNumber(candidate.height) &&
+    optionalNumber(candidate.durationMs) &&
+    optionalString(candidate.thumbnailR2Key)
+  );
+}
+
+function optionalString(value: unknown): boolean {
+  return value === undefined || typeof value === "string";
+}
+
+function optionalNumber(value: unknown): boolean {
+  return value === undefined || typeof value === "number";
 }

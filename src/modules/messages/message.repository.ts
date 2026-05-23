@@ -2,10 +2,11 @@ import type { InboundMessage } from "../../adapters/channel-adapter";
 import { createId } from "../../shared/ids";
 import { stringifyJson } from "../../shared/json";
 import { nowIso } from "../../shared/time";
-import type { Message, MessageRow } from "./message.types";
+import type { Message, MessageAttachment, MessageRow, MessageType } from "./message.types";
 import { mapMessage } from "./message.types";
 
 export type CreateInboundMessageInput = {
+  id?: string;
   conversationId: string;
   channelAccountId: string;
   inbound: InboundMessage;
@@ -17,12 +18,15 @@ export type CreateInboundMessageResult = {
 };
 
 export type CreateOutboundMessageInput = {
+  id?: string;
   conversationId: string;
   channelAccountId: string;
   senderAdminUserId?: string;
   senderType: "agent" | "ai";
   clientMessageId?: string;
-  content: string;
+  messageType?: MessageType;
+  content: string | null;
+  attachments?: MessageAttachment[];
   status: "sending" | "sent" | "failed";
   aiMetadata?: unknown;
   aiReferences?: unknown;
@@ -134,7 +138,7 @@ export class MessageRepository {
   }
 
   async createInbound(input: CreateInboundMessageInput): Promise<CreateInboundMessageResult> {
-    const id = createId("msg");
+    const id = input.id ?? createId("msg");
     const now = input.inbound.receivedAt || nowIso();
 
     await this.db
@@ -184,7 +188,7 @@ export class MessageRepository {
   }
 
   async createOutbound(input: CreateOutboundMessageInput): Promise<Message> {
-    const id = createId("msg");
+    const id = input.id ?? createId("msg");
     const now = nowIso();
 
     await this.db
@@ -207,7 +211,7 @@ export class MessageRepository {
           created_at,
           updated_at
         )
-        VALUES (?, ?, ?, 'outbound', ?, ?, ?, 'text', ?, '[]', ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
       )
       .bind(
@@ -217,7 +221,9 @@ export class MessageRepository {
         input.senderType,
         input.senderAdminUserId ?? null,
         input.clientMessageId ?? null,
+        input.messageType ?? "text",
         input.content,
+        stringifyJson(input.attachments ?? []),
         stringifyJson(input.aiMetadata ?? {}),
         stringifyJson(input.aiReferences ?? []),
         input.status,
