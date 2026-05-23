@@ -8,6 +8,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Hono](https://img.shields.io/badge/Hono-4.x-E36002?style=flat-square)
 ![D1](https://img.shields.io/badge/Cloudflare-D1-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+![R2](https://img.shields.io/badge/Cloudflare-R2-F38020?style=flat-square&logo=cloudflare&logoColor=white)
 
 ## 为什么免费
 
@@ -40,6 +41,7 @@
 | --------------- | ----------------------------------------------------------------------------- |
 | 运行平台        | Cloudflare Workers                                                            |
 | 数据库          | Cloudflare D1                                                                 |
+| 媒体附件        | Cloudflare R2                                                                 |
 | 知识库          | Cloudflare AI Search                                                          |
 | AI 模型         | Cloudflare Workers AI                                                         |
 | 后台项目        | [admin](https://github.com/unicornB/Supportly-Ai-Admin.git)                   |
@@ -85,6 +87,10 @@ Widget Demo：https://supportly.comarket.dev/demo
 
 QQ 交流群：1081883123
 
+<p align="center">
+  <img width="220" src="https://file.comarket.dev/supportly/qrcode_1779537224552.jpg" alt="Supportly QQ 交流群二维码">
+</p>
+
 ## 架构图
 
 ```text
@@ -99,6 +105,7 @@ Cloudflare Worker
   ├─ Channel Adapters
   ├─ Conversation Service
   ├─ Message Service
+  ├─ Media Service
   ├─ Knowledge Service
   ├─ AI Service
   └─ Auth Service
@@ -106,9 +113,12 @@ Cloudflare Worker
         ├─ D1
         │   ├─ admin_users
         │   ├─ channel_accounts
-        │   ├─ contacts / conversations
+        │   ├─ conversations
         │   ├─ messages
         │   └─ kb_documents
+        │
+        ├─ R2
+        │   └─ 图片 / 视频消息附件
         │
         ├─ AI Search
         │   └─ 知识库检索 / 文档同步
@@ -154,6 +164,7 @@ AI 功能订阅开关
 ```text
 Workers
 D1
+R2
 AI Search
 Workers AI
 Workers Assets
@@ -219,6 +230,8 @@ AI 回复流程：
 
 Widget 发送消息时，HTTP 接口只同步完成访客消息写入并立即返回；AI Search / Workers AI 回复在 Worker `waitUntil` 后台任务中生成，完成后通过 WebSocket 推送给访客和 Admin。
 
+图片/视频消息不会触发 AI 自动回复。媒体文件先上传到 R2，再写入 `messages`，最后通过 WebSocket 推送给访客端和 Admin。客户端通过附件读取接口加载缩略图、播放视频或打开大图预览。
+
 ## 功能特性
 
 免费单实例版本已经覆盖客服 MVP 的主要链路：
@@ -237,6 +250,9 @@ Widget 发送消息时，HTTP 接口只同步完成访客消息写入并立即�
 - [x] 会话列表
 - [x] 会话未读数
 - [x] 人工回复
+- [x] 图片消息
+- [x] 视频消息
+- [x] 图片点击查看大图
 - [x] Bot / 人工接管切换
 - [x] 关闭会话
 - [x] 消息发送状态
@@ -244,12 +260,12 @@ Widget 发送消息时，HTTP 接口只同步完成访客消息写入并立即�
 - [x] AI Search 文档同步
 - [x] AI 自动回复
 - [x] AI 引用展示
-- [x] Workers Assets 发布 Admin
+- [x] Admin / Widget 独立静态部署
 - [ ] WhatsApp 官方商业 API 接入
 - [ ] 微信公众号 / 企业微信接入
 - [ ] 多租户 SaaS
 - [ ] 客服分配
-- [ ] 文件消息
+- [ ] 通用文件消息
 - [ ] 满意度评价
 - [ ] 工单系统
 
@@ -276,9 +292,11 @@ pnpm install
 
 ```text
 D1 database
+R2 bucket
 AI Search namespace
 AI Search instance
 Workers AI binding
+Durable Objects migration
 ```
 
 当前 `wrangler.toml` 示例：
@@ -288,6 +306,23 @@ Workers AI binding
 binding = "DB"
 database_name = "supportly"
 database_id = "replace-with-d1-database-id"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "supportly"
+remote = true
+
+[[durable_objects.bindings]]
+name = "VISITOR_STREAM"
+class_name = "VisitorStream"
+
+[[durable_objects.bindings]]
+name = "ADMIN_STREAM"
+class_name = "AdminStream"
+
+[[migrations]]
+tag = "v1_realtime_streams"
+new_sqlite_classes = ["VisitorStream", "AdminStream"]
 
 [[ai_search_namespaces]]
 binding = "AI_SEARCH"
@@ -311,6 +346,22 @@ WIDGET_TOKEN_SECRET = "supportly-widget-dev-secret-change-before-deploy"
 database_id
 JWT_SECRET
 WIDGET_TOKEN_SECRET
+```
+
+`MEDIA_BUCKET` 是聊天图片/视频附件存储。当前示例使用：
+
+```toml
+bucket_name = "supportly"
+remote = true
+```
+
+这表示 `wrangler dev` 本地开发时也会访问真实 R2 bucket。如果希望本地写入 Miniflare 本地 R2，把 `remote = true` 删除或改为 `false`。
+
+R2 bucket 不需要配置公开域名。Supportly 会通过 Worker API 鉴权读取附件：
+
+```text
+/api/conversations/:conversationId/messages/:messageId/attachments/:index
+/api/widget/conversations/:conversationId/messages/:messageId/attachments/:index
 ```
 
 ### 3. 执行数据库迁移
@@ -412,6 +463,23 @@ cd admin
 pnpm build
 ```
 
+生产环境构建 Admin 时，必须显式指定 API 域名。否则 Admin 会把 `/api/*` 请求发到静态站点同域，容易出现 `POST /api/auth/login` 返回 `405 Method Not Allowed`。
+
+```shell
+VITE_API_BASE_URL=https://api.supportly.comarket.dev \
+VITE_PUBLIC_WEBHOOK_BASE_URL=https://api.supportly.comarket.dev \
+VITE_WIDGET_API_BASE_URL=https://api.supportly.comarket.dev \
+VITE_PUBLIC_WIDGET_BASE_URL=https://supportly.comarket.dev \
+pnpm build
+```
+
+域名职责建议：
+
+```text
+https://api.supportly.comarket.dev      -> server-api Worker
+https://supportly.comarket.dev          -> Admin / Widget 静态资源
+```
+
 ## Web Chat Widget
 
 Widget 项目在：
@@ -432,6 +500,12 @@ Widget 项目在：
 cd web-widget
 VITE_WIDGET_API_BASE_URL=http://localhost:8787 pnpm build
 pnpm preview
+```
+
+生产环境构建 Widget 时，`VITE_WIDGET_API_BASE_URL` 应指向 Server API：
+
+```shell
+VITE_WIDGET_API_BASE_URL=https://api.supportly.comarket.dev pnpm build
 ```
 
 接入示例：
@@ -563,7 +637,7 @@ GET  /api/auth/me
 ### 后台管理员
 
 ```text
-GET /api/admin/me
+GET /api/admin
 ```
 
 ### 渠道
@@ -582,6 +656,8 @@ GET  /api/conversations
 GET  /api/conversations/:id
 GET  /api/conversations/:id/messages
 POST /api/conversations/:id/messages
+POST /api/conversations/:id/messages/media
+GET  /api/conversations/:conversationId/messages/:messageId/attachments/:index
 POST /api/conversations/:id/handoff
 POST /api/conversations/:id/resolve
 ```
@@ -602,8 +678,61 @@ Widget API 不使用后台管理员鉴权，使用 visitor token：
 ```text
 POST /api/widget/conversations
 POST /api/widget/conversations/:conversationId/messages
+POST /api/widget/conversations/:conversationId/messages/media
 GET  /api/widget/conversations/:conversationId/messages
+GET  /api/widget/conversations/:conversationId/messages/:messageId/attachments/:index
 ```
+
+### 媒体消息
+
+图片/视频消息使用 `multipart/form-data` 上传。文件写入 R2，D1 的 `messages.attachments_json` 只保存附件元数据。
+
+客服发送图片/视频：
+
+```text
+POST /api/conversations/:id/messages/media
+Authorization: Bearer <adminToken>
+Content-Type: multipart/form-data
+
+file=<image|video>
+clientMessageId=admin_xxx
+content=可选说明
+fileName=可选文件名
+mimeType=可选 MIME
+```
+
+访客发送图片/视频：
+
+```text
+POST /api/widget/conversations/:conversationId/messages/media
+Authorization: Bearer <visitorToken>
+Content-Type: multipart/form-data
+
+file=<image|video>
+clientMessageId=local_xxx
+content=可选说明
+pageUrl=可选页面 URL
+pageTitle=可选页面标题
+fileName=可选文件名
+mimeType=可选 MIME
+```
+
+支持的 MIME：
+
+```text
+图片：image/jpeg, image/png, image/gif, image/webp
+视频：video/mp4, video/webm, video/quicktime
+```
+
+大小限制：
+
+```text
+图片最大 10 MB
+视频最大 50 MB
+单条媒体消息 MVP 只支持 1 个附件
+```
+
+附件读取接口会校验 Admin token 或 Visitor token，并支持视频 `Range` 请求。R2 bucket 可以保持私有，不需要开启 `r2.dev` 或自定义域名。
 
 ### 渠道 Webhook
 
@@ -630,6 +759,7 @@ migrations/0001_init.sql
 migrations/0002_seed_default_admin.sql
 migrations/0003_set_default_admin_password.sql
 migrations/0004_unique_kb_ai_search_item.sql
+migrations/0005_message_client_message_id.sql
 ```
 
 数据库详细说明参考：
@@ -663,11 +793,16 @@ src/
     routes/
     responses.ts
 
+  durable-objects/
+    admin-stream.ts
+    visitor-stream.ts
+
   modules/
     ai/
     channels/
     conversations/
     knowledge/
+    media/
     messages/
     users/
     widget/
@@ -725,10 +860,23 @@ export interface ChannelAdapter {
 
 ```text
 客服人工回复
+客服图片 / 视频回复
 调用渠道 Adapter 投递消息
 标记 sent / failed
 读取会话消息
 清理未读数
+```
+
+### Media Service
+
+负责：
+
+```text
+校验图片 / 视频 MIME 和大小
+把附件写入 R2
+生成标准化 attachments_json
+按 Admin token 或 Visitor token 鉴权读取附件
+支持视频 Range 响应
 ```
 
 ### Widget Service
@@ -740,6 +888,7 @@ export interface ChannelAdapter {
 visitor token 签发
 visitor token 校验
 Widget 消息发送
+Widget 图片 / 视频发送
 Widget 历史消息读取
 Widget WebSocket 实时推送
 AI 回复后台生成
@@ -772,6 +921,39 @@ AI Search 和 Workers AI 绑定访问的是远程 Cloudflare 资源。
 retrieval_type = vector
 ```
 
+## R2 媒体附件
+
+当前图片/视频消息采用：
+
+```text
+R2 保存文件内容
+D1 messages 保存消息记录
+D1 messages.attachments_json 保存附件元数据
+Worker API 鉴权读取附件
+```
+
+`attachments_json` 示例：
+
+```json
+[
+  {
+    "type": "image",
+    "r2Key": "media/conv_xxx/msg_xxx/att_xxx/photo.jpg",
+    "fileName": "photo.jpg",
+    "mimeType": "image/jpeg",
+    "size": 123456
+  }
+]
+```
+
+R2 key 规则：
+
+```text
+media/{conversationId}/{messageId}/{attachmentId}/{safeFileName}
+```
+
+不要把 R2 bucket 设为公开。Supportly 的附件读取接口会先校验会话访问权限，再从 R2 读取对象并返回。视频播放依赖 `Range` 请求，Worker 会透传 `Accept-Ranges`、`Content-Range` 和 `Content-Length` 等响应头。
+
 ## 环境变量
 
 | 变量                  | 说明                            |
@@ -781,6 +963,17 @@ retrieval_type = vector
 | `JWT_SECRET`          | 后台登录 token 签名密钥         |
 | `WIDGET_TOKEN_SECRET` | Web Chat visitor token 签名密钥 |
 | `ENCRYPTION_KEY`      | 预留，加密敏感配置              |
+
+## Cloudflare Bindings
+
+| Binding          | 类型             | 说明                         |
+| ---------------- | ---------------- | ---------------------------- |
+| `DB`             | D1 Database      | 业务数据库                   |
+| `MEDIA_BUCKET`   | R2 Bucket        | 图片 / 视频消息附件          |
+| `VISITOR_STREAM` | Durable Object   | 访客 WebSocket 连接和广播    |
+| `ADMIN_STREAM`   | Durable Object   | Admin WebSocket 连接和广播   |
+| `AI_SEARCH`      | AI Search        | 知识库文档索引和检索         |
+| `AI`             | Workers AI       | AI 回复生成                  |
 
 ## 常见问题
 
@@ -799,6 +992,83 @@ remote = true
 ```
 
 表示本地开发也会调用真实 Cloudflare 资源。
+
+当前 R2 binding 也配置了：
+
+```toml
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "supportly"
+remote = true
+```
+
+因此本地 `wrangler dev` 上传图片/视频时，会写入真实 R2 bucket。要改成本地模拟 R2，删除或关闭这个 `remote = true`。
+
+### R2 需要配置公开域名吗？
+
+不需要。当前附件读取走 Worker API：
+
+```text
+GET /api/conversations/:conversationId/messages/:messageId/attachments/:index
+GET /api/widget/conversations/:conversationId/messages/:messageId/attachments/:index
+```
+
+Worker 会校验 Admin token 或 Visitor token 后读取 R2。R2 bucket 建议保持私有，不开启 `r2.dev` 或自定义公开域名。
+
+只有在你想让附件绕过 Supportly API、直接以 CDN 静态资源方式访问时，才需要配置 R2 自定义域名。
+
+### 登录接口为什么返回 405？
+
+如果浏览器里看到：
+
+```text
+POST https://supportly.comarket.dev/api/auth/login
+405 Method Not Allowed
+```
+
+说明 Admin 静态站点包没有用正确的 `VITE_API_BASE_URL` 构建，请求被发到了静态站点域名。正确的 API 域名应该是：
+
+```text
+https://api.supportly.comarket.dev/api/auth/login
+```
+
+重新构建 Admin：
+
+```shell
+VITE_API_BASE_URL=https://api.supportly.comarket.dev \
+VITE_PUBLIC_WEBHOOK_BASE_URL=https://api.supportly.comarket.dev \
+VITE_WIDGET_API_BASE_URL=https://api.supportly.comarket.dev \
+VITE_PUBLIC_WIDGET_BASE_URL=https://supportly.comarket.dev \
+pnpm build
+```
+
+然后重新部署 `admin/dist`。
+
+### 图片或视频上传失败怎么排查？
+
+优先检查：
+
+```text
+MEDIA_BUCKET binding 是否存在
+R2 bucket_name 是否存在于当前 Cloudflare 账号
+remote = true 时是否已登录正确 Cloudflare 账号
+文件 MIME 是否在允许列表中
+图片是否超过 10 MB
+视频是否超过 50 MB
+前端是否把请求发到了 api 域名
+```
+
+支持的媒体类型：
+
+```text
+image/jpeg
+image/png
+image/gif
+image/webp
+video/mp4
+video/webm
+video/quicktime
+```
 
 ### 为什么 AI 没有回复？
 
